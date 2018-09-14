@@ -13,12 +13,15 @@ local screen = require('ili9225')(pins)
 
 screen:init()
 
+screen.init = nil
+
 local function httpHandler(req, res)
   if req.url:sub(1, 6) == '/blit?' and req.method == 'POST' then
     function req:ondata(chunk)
       if chunk then
         screen:fill(chunk)
       else
+        res:send()
         res:finish()
       end
     end
@@ -30,11 +33,13 @@ local function httpHandler(req, res)
     screen:window(
       tonumber(params.x0), tonumber(params.x1),
       tonumber(params.y0), tonumber(params.y1), params.landscape)
+    res:send()
     res:finish()
   else
     -- technically, due to the HTTP server implementation ganked here's hacks,
     -- this is going to send "404 Not Found OK", but I'm "OK" with that
-    res:finish(nil, '404 Not Found')
+    res:send(nil, '404 Not Found')
+    res:finish()
   end
 end
 

@@ -65,11 +65,11 @@ do
     -- NB: req.send takes care of response headers
     if data then
       self:send(data, status)
+    elseif self.send_header then
+      c:send("\r\n")
     end
     -- finalize chunked transfer encoding
-    c:send("0\r\n\r\n")
-    -- close connection
-    c:close()
+    c:send("0\r\n\r\n", function () c:close() end)
   end
   --
   local make_res = function(conn)
