@@ -22,7 +22,7 @@ local function httpHandler(req, res)
         res:finish()
       end
     end
-  else if req.url:sub(1, 8) == '/window?' and req.method == 'POST' then
+  elseif req.url:sub(1, 8) == '/window?' and req.method == 'POST' then
     local params = {}
     for k, v in req.url:sub(9):gmatch('([^&]-)=([^&]*)') do
       params[k] = v
