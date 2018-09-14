@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>postftr dispatch</title>
+<style>
+  canvas {
+    background: #000;
+  }
+</style>
+</head>
+<body>
+<p><canvas id="canvas" width="176" height="220"></canvas></p>
+<p><label><input type="checkbox" id="landscape"> Landscape</label></p>
+<p><input type="file" id="file"></p>
+<p>to http://<input type="text" id="ip" value="192.168."></p>
+<p><button type="button" id="post">Post</button></p>
+<pre><output id="output"></output></pre>
+<script>
+/* global fetch Blob URL */
+"use strict";
+const width = 176;
+const height = 220;
+const pl = width * height;
+const il = pl * 4;
+const ol = pl * 2;
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const landscapeCheckbox = document.getElementById('landscape');
+const fileInput = document.getElementById('file');
+const ipInput = document.getElementById('ip');
+const postButton = document.getElementById('post');
+const image = document.createElement('img');
+const outputElement = document.getElementById('output');
+
+const outBytes = new Uint8ClampedArray(ol);
+
+function imageData565ify(imageData) {
+  const id = imageData.data;
+  const il = id.length;
+  for (let i = 0; i < il; i += 4) {
+    id[i] = id[i] & 0xf8;
+    id[i + 1] = id[i + 1] & 0xfc;
+    id[i + 2] = id[i + 2] & 0xf8;
+    id[i + 3] = 255;
+  }
+  return imageData;
+}
+
+function rgba8888_to_rgb565(inBytes) {
+  for (let ii = 0, oi = 0; oi < ol; ii += 4, oi += 2) {
+    outBytes[oi] = (inBytes[ii] & 248) | (inBytes[ii + 1] >> 5);
+    outBytes[oi + 1] = (inBytes[ii + 1] << 3 & 224) | (inBytes[ii + 2] >> 3);
+  }
+  return outBytes;
+}
+
+function toggleLandscape(evt) {
+  const landscape = landscapeCheckbox.checked;
+  canvas.width = landscape ? height : width;
+  canvas.height = landscape ? width : height;
+}
+landscapeCheckbox.addEventListener('change', toggleLandscape);
+
+function drawImage() {
+  const canvasRatio = canvas.width / canvas.height;
+  const imageRatio = image.width / image.height;
+  let sx, sy, sheight, swidth;
+  // image wider than canvas
+  if (canvasRatio < imageRatio) {
+    sheight = image.height;
+    sy = 0;
+    swidth = image.height * canvasRatio;
+    sx = (image.width - swidth) / 2;
+  // image taller or equal-size to canvas
+  } else {
+    swidth = image.width;
+    sx = 0;
+    sheight = image.width / canvasRatio;
+    sy = (image.height - sheight) / 2;
+  }
+  ctx.drawImage(image, sx, sy, swidth, sheight,
+    0, 0, canvas.width, canvas.height);
+
+  // we don't actually have to do the 565ify + put step,
+  // but it's nice to have a preview of the reduced-color image
+  const imageData = imageData565ify(
+    ctx.getImageData(0, 0, canvas.width, canvas.height));
+  ctx.putImageData(imageData, 0, 0);
+
+  // load up our bit-packed output buffer
+  rgba8888_to_rgb565(imageData.data);
+}
+image.addEventListener('load', drawImage);
+
+function loadImage(evt) {
+  const files = fileInput.files;
+  if (files.length < 1) {
+    outputElement.textContent('no file selected');
+  } else {
+    image.src = URL.createObjectURL(files[0]);
+  }
+}
+fileInput.addEventListener('change', loadImage);
+
+function postCanvasData() {
+  const target = ipInput.value;
+  const outBlob = new Blob(outBytes, {type: 'application/octet-stream'});
+  return fetch('http://' + target + '/blit?',
+    {method: 'POST', body: outBlob});
+}
+
+function submitImage() {
+  const target = ipInput.value;
+  return fetch('http://' + target + '/window?x0=0&x1=175&y0=0&y1=219' +
+    (landscapeCheckbox.checked ? '&landscape=true' : ''),
+    {method: 'POST'}).then(postCanvasData);
+}
+postButton.addEventListener('click', submitImage);
+
+</script>
+</body>
+</html>
