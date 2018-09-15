@@ -9,7 +9,7 @@ local pins = {
   led = 1, -- D1, GPIO5
 }
 
-local screen = require('ili9225')(pins)
+screen = require('ili9225')(pins)
 
 screen:init()
 
