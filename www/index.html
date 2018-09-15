@@ -11,7 +11,12 @@
 </head>
 <body>
 <p><canvas id="canvas" width="176" height="220"></canvas></p>
-<p><label><input type="checkbox" id="landscape"> Landscape</label></p>
+<p>Orient:
+  <label><input type="radio" name="orient" value="0"> Up</label>
+  <label><input type="radio" name="orient" value="1"> Right</label>
+  <label><input type="radio" name="orient" value="2"> Down</label>
+  <label><input type="radio" name="orient" value="3"> Left</label>
+</p>
 <p><input type="file" id="file"></p>
 <p>to http://<input type="text" id="ip" value="192.168."></p>
 <p><button type="button" id="post">Post</button></p>
@@ -24,10 +29,15 @@ const height = 220;
 const pl = width * height;
 const il = pl * 4;
 const ol = pl * 2;
+const orientations = [
+  'x0=0&x1=175&y0=0&y1=219',
+  'x0=0&x1=175&y0=219&y1=0',
+  'x0=175&x1=0&y0=219&y1=0',
+  'x0=175&x1=0&y0=0&y1=219'
+];
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const landscapeCheckbox = document.getElementById('landscape');
 const fileInput = document.getElementById('file');
 const ipInput = document.getElementById('ip');
 const postButton = document.getElementById('post');
@@ -57,11 +67,22 @@ function rgba8888_to_rgb565(inBytes) {
 }
 
 function toggleLandscape(evt) {
-  const landscape = landscapeCheckbox.checked;
-  canvas.width = landscape ? height : width;
-  canvas.height = landscape ? width : height;
+  // if this is the radio that's getting toggled on
+  if (evt.target.checked) {
+    // check if this is a landscape orientation
+    const landscape = evt.target.value % 2;
+    // if the canvas doesn't match our orientation
+    if (landscape != (canvas.height == width)) {
+      // resize the canvas
+      canvas.width = landscape ? height : width;
+      canvas.height = landscape ? width : height;
+      fileInput.value = null;
+    }
+  }
 }
-landscapeCheckbox.addEventListener('change', toggleLandscape);
+for (let el of document.querySelectorAll('input[name=orient]')) {
+  el.addEventListener('change', toggleLandscape);
+}
 
 function drawImage() {
   const canvasRatio = canvas.width / canvas.height;
@@ -106,16 +127,21 @@ fileInput.addEventListener('change', loadImage);
 
 function postCanvasData() {
   const target = ipInput.value;
-  const outBlob = new Blob(outBytes, {type: 'application/octet-stream'});
+  const outBlob = new Blob([outBytes], {type: 'application/octet-stream'});
   return fetch('http://' + target + '/blit?',
-    {method: 'POST', body: outBlob});
+    {method: 'POST', mode: 'no-cors', body: outBlob});
+}
+
+function postWindow() {
+  const target = ipInput.value;
+  const orientation =
+    document.querySelector("input[name=orient]:checked").value;
+  return fetch('http://' + target + '/window?' + orientations[+orientation],
+    {method: 'POST', mode: 'no-cors'});
 }
 
 function submitImage() {
-  const target = ipInput.value;
-  return fetch('http://' + target + '/window?x0=0&x1=175&y0=0&y1=219' +
-    (landscapeCheckbox.checked ? '&landscape=true' : ''),
-    {method: 'POST'}).then(postCanvasData);
+  return postWindow().then(postCanvasData);
 }
 postButton.addEventListener('click', submitImage);
 
