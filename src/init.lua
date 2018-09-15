@@ -26,13 +26,12 @@ local function httpHandler(req, res)
       end
     end
   elseif req.url:sub(1, 8) == '/window?' and req.method == 'POST' then
-    local params = {}
+    local q = {}
     for k, v in req.url:sub(9):gmatch('([^&]-)=([^&]*)') do
-      params[k] = v
+      q[k] = tonumber(v) or v
     end
-    screen:window(
-      tonumber(params.x0), tonumber(params.x1),
-      tonumber(params.y0), tonumber(params.y1), params.landscape)
+    screen:window(q.x0, q.x1, q.y0, q.y1, q.landscape)
+    screen:jump(q.x0, q.y0)
     res:send()
     res:finish()
   else
