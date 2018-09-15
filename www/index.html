@@ -76,7 +76,12 @@ function toggleLandscape(evt) {
       // resize the canvas
       canvas.width = landscape ? height : width;
       canvas.height = landscape ? width : height;
+      // clear the file selection
       fileInput.value = null;
+      // clear the saved output
+      for (let i = 0; i < ol; ++i) {
+        outBytes[i] = 0;
+      }
     }
   }
 }
