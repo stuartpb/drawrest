@@ -2,14 +2,7 @@ local httpServer = require('httpserv')
 
 -- wired up per http://www.microyum.cc/wp-content/uploads/2018/06/2.0-SPI-wiring-1024x1024.jpg
 
-local pins = {
-  rs = 2, -- D2, GPIO4
-  cs = 8, -- D8, GPIO15
-  rst = 4, -- D4, GPIO2
-  led = 1, -- D1, GPIO5
-}
-
-screen = require('ili9225')(pins)
+screen = require('ili9225')()
 
 screen:init()
 
