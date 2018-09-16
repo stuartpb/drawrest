@@ -25,7 +25,7 @@ do
   ------------------------------------------------------------------------------
   -- response methods
   ------------------------------------------------------------------------------
-  local send = function(self, data, status)
+  local send = function(self, data, status, cb)
     local c = self.conn
     -- TODO: req.send should take care of response headers!
     if self.send_header then
@@ -48,7 +48,7 @@ do
       -- chunked transfer encoding
       c:send(("%X\r\n"):format(#data))
       c:send(data)
-      c:send("\r\n")
+      c:send("\r\n", cb)
     end
   end
   local send_header = function(self, name, value)

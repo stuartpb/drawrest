@@ -49,6 +49,21 @@ local function httpHandler(req, res)
     res:send()
     res:finish()
 
+  -- If it's a request for the index page
+  elseif req.url == '/' and req.method == 'GET' then
+    -- Serve it up, line by line
+    local index = file.open("index.html", 'r')
+    local line = index:readline()
+    local function continue()
+      line = index:readline()
+      if line then
+        res:send(line, nil, continue)
+      else
+        res:finish()
+      end
+    end
+    res:send(line, 200, continue)
+
   -- If it's a request to any other endpoint
   else
     -- technically, due to the HTTP server implementation ganked here's hacks,
