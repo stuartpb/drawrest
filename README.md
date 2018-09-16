@@ -1,4 +1,4 @@
-# postftr
+# drawrest
 
 A NodeMCU app for posting pictures to a TFT frame.
 
