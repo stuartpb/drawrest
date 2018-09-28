@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>postftr dispatch</title>
+<title>drawrest dispatch</title>
 <style>
   canvas {
     background: #000;
@@ -76,12 +76,8 @@ function toggleLandscape(evt) {
       // resize the canvas
       canvas.width = landscape ? height : width;
       canvas.height = landscape ? width : height;
-      // clear the file selection
-      fileInput.value = null;
-      // clear the saved output
-      for (let i = 0; i < ol; ++i) {
-        outBytes[i] = 0;
-      }
+      // redraw any current image
+      if (fileInput.value && image.complete) drawImage();
     }
   }
 }
